@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{% block title %}{% endblock %} - Playah</title>
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+				"Roboto", "Oxygen", "Ubuntu", "Helvetica Neue", Arial, sans-serif;
+		}
+
+		/* Keep descriptions nice and tidy. */
+		pre {
+			white-space: pre-wrap;
+		}
+
+		video {
+			max-width: 100%;
+			height: auto;
+		}
+
+		/*
+		 * Have marker and heading be on the same line.
+		 * Marker isn't as tall as heading, though.
+		 */
+		summary h2 {
+			display: inline;
+		}
+
+		/*
+		 * Pushes previous and next off to the sides and keeps playlist name
+		 * center-field.
+		 */
+		.playlist-controls {
+			display: flex;
+			justify-content: space-between;
+		}
+
+		/* 
+		 * Helps keep playlist name centered when previous or next are missing.
+		 * Not perfect though, as the name will be slightly off center when one
+		 * of them are missing.
+		 */
+		.playlist-controls>p {
+			min-width: 5em;
+		}
+
+		/*
+		 * For error output.
+		 * See https://ansi2html.readthedocs.io/index.html
+		 */
+		.ansi31 {
+			color: #aa0000;
+		}
+		
+		/*
+		 * An emulation of full-screen that SubtitlesOctopus
+		 * will be happy with. Still a WIP.
+		 */
+		.full-screen {
+			height: 100vh;
+			width: 100%;
+			background-color: black;
+			margin: 0;
+			padding: 0;
+		}
+
+		.flex {
+			display: flex;
+		}
+
+		.playlist-entries {
+			display: grid;
+		}
+
+		ul.playlist-entries {
+			list-style-type: none;
+		}
+
+		/* Result */
+		.playlist-entries > li {
+			display: grid;
+			grid-auto-columns: 1fr;
+			grid-auto-flow: column;
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		{% block main %}{% endblock %}
+	</main>
+
+	<hr>
+
+	<footer>
+		{% if request.url_rule.rule != '/' %}
+		<p><a href="/">Index</a></p>
+		{% endif %}
+		<p>made by Kyle Anthony Williams (<a href="https://github.com/SuperSonicHub1">@supersonichub1</a>)</p>
+		<p>
+			released into the public domain via the
+			<a href="https://unlicense.org">Unlicense</a>
+		</p>
+		<p>
+			<a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a>
+			version
+			<a {{ dict(href='https://github.com/yt-dlp/yt-dlp/releases/tag/' + yt_dlp_version) | xmlattr }}>{{
+				yt_dlp_version }}</a>,
+			commit hash
+			<a {{ dict(href='https://github.com/yt-dlp/yt-dlp/commit/' + yt_dlp_release_git_head) | xmlattr }}>{{
+				yt_dlp_release_git_head }}</a>
+		</p>
+		<p>
+			<a href="https://github.com/xenova/chat-downloader">chat-downloader</a>
+			version
+			<a {{ dict(href='https://github.com/xenova/chat-downloader/releases/tag/v' + chat_downloader_version) |
+				xmlattr }}>{{
+				chat_downloader_version }}</a>
+		</p>
+	</footer>
+</body>
+
+</html>

@@ -1,0 +1,95 @@
+{% macro description(info) -%}
+	{% if 'description' in info and info.description %}
+	<details>
+		<summary><h2>Description</h2></summary>
+		<pre>{{ info.description | urlize(target='_blank') }}</pre>
+	</details>
+	{% endif %}
+{%- endmacro %}
+
+{% macro uploader(info) -%}
+	{% set uploader = info | get_uploader %}
+	{% if uploader %}
+		{% if 'uploader_url' in info %}
+			<p>
+				by
+				<a {{ dict(href=url_for('playlist', list=info.uploader_url)) | xmlattr }}>
+					{{ uploader }}
+				</a>
+			</p>
+		{% else %}
+			<p>by {{ uploader }}</p>
+		{% endif %}
+	{% endif %}
+{%- endmacro %}
+
+{% macro extractor(info) -%}
+	<p>on {{ info.extractor }} ({{ info.extractor_key }})</p>
+{%- endmacro %}
+
+{% macro search(query='', search_key='ytsearch') -%}
+	<form {{ dict(action=url_for('results'), method='get') | xmlattr }}>
+		<label>
+			Query:
+			<input required {{ dict(value=query, type="text", name="search_query", id="search_query") | xmlattr }}>
+		</label>
+		<label>
+			Extractor:
+			<select required name="extractor" id="extractor">
+				{% for (key, name) in search_extractors.items() %}
+				<option  {{ 'selected' if key == search_key }}{{ dict(value=key) | xmlattr }}>{{ name }}</option>
+				{% endfor %}
+			</select>
+		</label>
+		<button type="submit">Go</button>
+	</form>
+{%- endmacro %}
+
+{% macro original_url(info) -%}
+<p><a {{ dict(href=results.webpage_url) | xmlattr }}>Original link</a></p>
+{%- endmacro %}
+
+{% macro playlist(info, list_type="ol", error_text="No entries.") -%}
+	{% if info.entries %}
+	<{{ list_type }} class="playlist-entries">
+		{% for entry in info.entries %}
+		<li>
+			<div>
+				{# TODO: Proxy thumbnail #}
+				{% if entry.thumbnails %}
+					<img {{ dict(src=entry.thumbnails[0].url) | xmlattr }}>
+				{% endif %}
+			</div>
+			<div>
+				<a {{ dict(href=url_for('resolve', url=entry.url)) | xmlattr }}>
+					{{ (entry.title or entry.url) | unescape }}
+				</a>
+				{{ uploader(entry) }}
+				{{ released_datetime(entry) }}
+			</div>
+		</li>
+		{% endfor %}
+	</{{ list_type }}>
+	{% else %}
+	<p>{{ error_text }}</p>
+	{% endif %}
+{%- endmacro %}
+
+{% macro released_datetime(info) -%}
+	{% set date = None %}
+	{% if 'release_timestamp' in info and info.release_timestamp != None  %}
+		{% set date = datetime.utcfromtimestamp(info.release_timestamp) %}
+	{% elif 'release_date' in info and info.release_date != None %}
+		{# Hack to get it to do UTC #}
+		{% set date = datetime.strptime(info.release_date + '+0000', '%Y%m%d%z') %}
+	{% elif 'timestamp' in info and info.timestamp != None %}
+		{% set date = datetime.utcfromtimestamp(info.timestamp) %}
+	{% elif 'upload_date' in info and info.upload_date != None %}
+		{# Hack to get it to do UTC #}
+		{% set date = datetime.strptime(info.upload_date + '+0000', '%Y%m%d%z') %}
+	{% endif %}
+	{% if date %}
+		<p>released {{ date.strftime('%c') }}</p>
+	{% endif %}
+{%- endmacro %}
+

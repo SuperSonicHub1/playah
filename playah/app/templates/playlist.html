@@ -1,0 +1,29 @@
+{% import 'macros.html' as macros with context %}
+{% extends "base.html" %}
+{% set title = info | get_title %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block main %}
+<h1>{{ title }}</h1>
+
+{{ macros.uploader(info) }}
+{{ macros.extractor(info) }}
+
+{{ macros.playlist(info) }}
+
+<p><a {{ dict(href=info.webpage_url) | xmlattr }}>Original link</a></p>
+
+{{ macros.description(info) }}
+
+{% if is_dev %}
+<details>
+	<summary>Debug</summary>
+	<h2>Playlist Info</h2>
+	<code><pre>{{ dict(info) | pprint | urlize }}</pre></code>
+</details>
+{% endif %}
+
+{% endblock %}

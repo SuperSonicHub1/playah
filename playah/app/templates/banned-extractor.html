@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}
+Banned Extractor: {{ error.extractor }}
+{% endblock %}
+
+{% block main %}
+<h1>Banned Extractor: {{ error.extractor }}</h1>
+
+<p>
+	This instance of Playah doesn't allow the streaming of videos
+	from {{ error.extractor }}. Consider using yt-dlp on your personal
+	machine, hosting your own instance of Playah, or contacting this
+	instance's administrator.
+</p>
+{% endblock %}

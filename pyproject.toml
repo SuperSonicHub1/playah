@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "playah"
+version = "0.1.0"
+description = ""
+authors = ["Kyle Anthony Williams <kyle.anthony.williams2@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+yt-dlp = "*"
+anyio = "^3.6.1"
+chat-downloader = "*"
+quart = "^0.18.0"
+HashableDict = "^0.3.0"
+ansi2html = "^1.8.0"
+httpx = "^0.23.0"
+m3u8 = "^3.3.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+types-setuptools = "^65.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

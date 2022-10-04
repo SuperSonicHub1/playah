@@ -1,0 +1,27 @@
+{# TODO: Allow one to play a search like a playlist #}
+{% import 'macros.html' as macros with context %}
+{% extends "base.html" %}
+
+{% block title %}
+Query for {{ query }} on {{ extractor }}
+{% endblock %}
+
+{% block main %}
+<h1>Query for {{ query }}</h1>
+{{  macros.extractor(results) }}
+
+{{ macros.search(query, extractor_search_key) }}
+
+{{ macros.playlist(results, list_type='ul', error_text='No results.') }}
+
+{{ macros.original_url(info) }}
+
+{% if is_dev %}
+<details>
+	<summary>Debug</summary>
+	<h2>Search results</h2>
+	<code><pre>{{ dict(results) | pprint | urlize }}</pre></code>
+</details>
+{% endif %}
+
+{% endblock %}

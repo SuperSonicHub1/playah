@@ -1,0 +1,29 @@
+{% import 'macros.html' as macros with context %}
+{% extends "base.html" %}
+
+{% block title %}
+Index
+{% endblock %}
+
+{% block main %}
+<h1>Playah</h1>
+<p>a yt-dlp client for the masses</p>
+
+<hr>
+
+<h2>View a video or playlist from a URL:</h2>
+<form {{ dict(action=url_for('resolve'), method='get') | xmlattr }}>
+	<label>
+		URL:
+		<input required type="url" name="url" id="url">
+	</label>
+	<button type="submit">Go</button>
+</form>
+<p>
+	Supported extractors can be found on
+	<a href="https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md">GitHub</a>.
+</p>
+
+<h2>Make a search:</h2>
+{{ macros.search() }}
+{% endblock %}

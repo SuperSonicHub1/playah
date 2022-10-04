@@ -1,0 +1,242 @@
+{% import 'macros.html' as macros with context %}
+{% extends "base.html" %}
+{% set title = info | get_title %}
+{% set webpage_url = info.webpage_url %}
+{% set features = dict(dash=False, hls=False, substation=False) %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block main %}
+<h1>{{ title }}</h1>
+{% if info.alt_title and info.alt_title != title %}
+<p><em>{{ info.alt_title }}</em></p>
+{% endif %}
+
+{{ macros.uploader(info) }}
+{{ macros.extractor(info) }}
+{{ macros.released_datetime(info) }}
+{% if info.modified_timestamp %}
+{% set timestamp = datetime.utcfromtimestamp(info.modified_timestamp) %}
+<p>modified <time {{ dict(datetime=timestamp.isoformat) | xmlattr }}>{{ timestamp.strftime('%c') }}</time></p>
+{% endif %}
+
+<div class="flex">
+	<video controls autoplay {{ dict(poster=url_for('proxy.thumbnail', v=webpage_url)) | xmlattr }}>
+		<p>HTML video not supported.</p>
+		{% if 'manifest_url' in info %}
+		{% set mimetype = info.manifest_url | guess_type(url=True) %}
+		{% if mimetype == 'application/vnd.apple.mpegurl' %}
+		{% set _ = features.update(dict(hls=True)) %}
+		<source {{ dict(src=url_for('proxy.manifest_hls', v=webpage_url), type=mimetype) | xmlattr }}>
+		{% elif mimetype == 'application/dash+xml' %}
+		{% set _ = features.update(dict(dash=True)) %}
+		<source {{ dict(src=url_for('proxy.manifest_dash', v=webpage_url), type=mimetype) | xmlattr }}>
+		{% else %}
+		<p>Cannot play manifest URL of type
+			<pre>{{ mimetype }}</pre>.
+		</p>
+		{% endif %}
+		{% else %}
+		<source {{ dict(src=url_for('proxy.media', v=webpage_url), type=(info.url | guess_type(url=True)) or (info.ext |
+			guess_type)) | xmlattr }}>
+		{% endif %}
+	
+		{% if info.requested_subtitles %}
+			{% for language, format in info.requested_subtitles.items() %}
+				{% set mimetype = (format.ext | guess_type) or (format.url | guess_type(url=True)) %}
+				{% set _ = features.update(dict(substation=features.substation or (mimetype == 'text/substation'))) %}
+				<track default {{ dict( srclang=language, label=format.name or language, src=url_for('proxy.requested_subtitles',
+					v=webpage_url, language=language), **{'data-type': mimetype}, ) | xmlattr }}>
+			{% endfor %}
+		{% endif %}
+	
+		{% if info.chapters %}
+		<track kind="chapters" {{ dict(label='Chapters' , src=url_for('chapters', v=webpage_url)) | xmlattr }}>
+		{% endif %}
+	</video>
+	{% if info | has_chat %}
+	<script type="module" {{ dict(src=url_for('static', filename='js/chat-component.js')) | xmlattr }}></script>
+	<live-chat {{ dict(url=webpage_url) | xmlattr }}></live-chat>
+	{% endif %}
+</div>
+
+{% if info.chapters %}
+<div>
+	<label>
+		Chapters:
+		<select id="chapters"></select>
+	</label>
+</div>
+<script type="module">
+	// Heavily inspired by https://thenewcode.com/977/Create-Interactive-HTML5-Video-with-WebVTT-Chapters
+	// Firefox and other browsers should really support track[kind=chapters] natively.
+	// Hope my inclusion of this as a WebVTT track instad of a JSON blob is
+	// useful to the disabled.
+
+	// Get elements
+	const chaptersVideo = document.querySelector('video')
+	/** @type {HTMLSelectElement} */
+	const selectEl = document.getElementById('chapters')
+	/** @type {HTMLTrackElement} */
+	const track = chaptersVideo
+		.querySelector('track[kind=chapters]')
+	const chapters = track.track
+
+	// Make and wait for track to load
+	// https://developer.mozilla.org/en-US/docs/Web/API/HTMLTrackElement#loading_of_the_tracks_text_resource
+	if (chapters.mode ==  "disabled") chapters.mode = 'hidden'
+	await(async () => {
+		while (track.readyState < 2) {
+			await new Promise(resolve => setTimeout(resolve, 100))
+		}
+	})()
+
+	// Add chapters 
+	/**
+	 * @param {number} time - in seconds
+	 * @returns {string}
+	 */
+	function formatTime(time) {
+		const zfill = (str, len = 2) => str.length >= len ? str : zfill('0' + str, len)
+		const seconds = zfill(Math.trunc(time % 60).toString())
+		const minutes = zfill(Math.trunc(time / 60 % 60).toString())
+		const hours = zfill(Math.trunc(time / (60 * 60) % 60).toString())
+		return `${hours}:${minutes}:${seconds}`
+	}
+	Array.from(chapters.cues).map(element => {
+		const optionText = `${element.text} (${formatTime(element.startTime)} - ${formatTime(element.endTime)})`
+		return new Option(optionText, element.id)
+	}).forEach(element => selectEl.add(element))
+
+
+	// Naviate around video
+	selectEl.addEventListener('change', (event) => {
+		chaptersVideo.currentTime = chapters.cues[selectEl.value].startTime
+		event.preventDefault()
+	})
+
+	// Change displayed chapter as video moves along
+	track.addEventListener('cuechange', e => {
+		selectEl.value = e.target.track.activeCues[0].id
+	})
+</script>
+{% endif %}
+
+<p><a {{ dict(href=info.webpage_url) | xmlattr }}>Original link</a></p>
+
+{% if playlist_info %}
+{% set entries = playlist_info.entries %}
+{% set index = index or 1 %}
+{% set index0 = index - 1 %}
+
+<div class="playlist-controls">
+	<p>
+		{% if index0 - 1 >= 0 %}
+		{% set entry = entries[index0 - 1] %}
+		{% set entry_index = index - 1 %}
+		<a {{ dict(href=url_for('watch', v=entry.url, list=playlist_info.webpage_url, index=entry_index)) | xmlattr }}>
+			⬅️ Previous: {{ entry.title | repr }}
+		</a>
+		{% endif %}
+	</p>
+
+	<p><a {{ dict(href=url_for('playlist', list=playlist_info.webpage_url)) | xmlattr }}>Playlist: {{
+			playlist_info.title | repr }}</a></p>
+
+	<p>
+		{% if index0 + 1 < (entries | length) %} {% set entry=entries[index0 + 1] %} {% set entry_index=index + 1 %} {%
+			set next_entry=True %} <a {{ dict(id='next' , href=url_for('watch', v=entry.url,
+			list=playlist_info.webpage_url, index=entry_index)) | xmlattr }}>
+			Next: {{ entry.title | repr }} ➡️
+			</a>
+			{% endif %}
+	</p>
+</div>
+{% endif %}
+
+{{ macros.description(info) }}
+
+{# TODO: Allow for disabling JS features #}
+{% if next_entry %}
+<script>
+	document
+		.querySelector('video')
+		.addEventListener('ended', () => document.getElementById('next').click())
+</script>
+{% endif %}
+
+{% if current_time %}
+<script>
+	document
+		.querySelector('video')
+		.currentTime = {{ current_time | tojson }};
+</script>
+{% endif %}
+
+{% if features.hls %}
+{# Only load script if HLS isn't natively supported #}
+<script type="module">
+	const hlsVideo = document.querySelector('video')
+	function loadScript(src, integrity, crossOrigin) {
+		return new Promise((resolve, reject) => {
+			const js = document.createElement('script')
+			js.src = src
+			js.integrity = integrity
+			js.crossOrigin = crossOrigin
+			js.addEventListener('load', resolve)
+			js.addEventListener('error', reject)
+			document.head.appendChild(js)
+		})
+	}
+
+	if (!hlsVideo.canPlayType('application/vnd.apple.mpegurl')) {
+		await loadScript(
+			"https://cdn.jsdelivr.net/npm/hls.js@1.2.1/dist/hls.min.js",
+			"sha256-dp1Z/b0d7Rq5S4G3tDiiU8zXYSPj8WfflAT+YM/a2JI=",
+			"anonymous",
+		)
+		if (Hls.isSupported()) {
+			const hls = new Hls()
+			hls.attachMedia(hlsVideo)
+			hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(document.querySelector('video source').src))
+		} else console.error("Cannot play HLS.")
+	}
+</script>
+{% endif %}
+
+{# TODO: If user doens't want JS, fallback to converting Substation to WebVTT #}
+{% if features.substation %}
+<script {{ dict(src=url_for('static', filename='js/subtitles-octopus.js')) | xmlattr }}></script>
+<script>
+	const substationVideo = document.querySelector('video')
+	const workerUrl = {{ url_for('static', filename='js/subtitles-octopus-worker.js') | tojson }};
+
+	const subUrl = Array.from(substationVideo.querySelectorAll('track'))
+		.map(el => [el.track, el])
+		.filter(([track, el]) => track.mode == 'showing')
+		.map(([track, el]) => el)[0].src
+	
+	console.log(subUrl)
+
+	const substation = new SubtitlesOctopus({
+		video: substationVideo,
+		subUrl, // Link to subtitles
+		// fonts: ['/test/font-1.ttf', '/test/font-2.ttf'], // Links to fonts (not required, default font already included in build)
+		workerUrl, // Link to file "libassjs-worker.js"
+	})
+</script>
+{% endif %}
+
+{% if is_dev %}
+<details>
+	<summary>Debug</summary>
+	<h2>Info</h2>
+	<code><pre>{{ dict(info) | pprint | urlize }}</pre></code>
+	{% if playlist_info %}
+	<h2>Playlist Info</h2>
+	<code><pre>{{ dict(playlist_info) | pprint | urlize }}</pre></code>
+	{% endif %}
+</details>
+{% endif %}
+
+{% endblock %}

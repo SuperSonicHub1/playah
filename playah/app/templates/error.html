@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}
+Error: {{ error.__class__.__qualname__ }}
+{% endblock %}
+
+{% block main %}
+<h1>Error: {{ error.__class__.__name__ }}</h1>
+
+<samp>{{ error_text }}</samp>
+{% endblock %}
