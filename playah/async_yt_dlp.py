@@ -36,7 +36,7 @@ def extract_info_sync(url: str, ytdlp_params: dict = {}):
 		# Prioritize the browser
 		subtitlesformat='vtt/best',
 	)
-	with YoutubeDL(ytdlp_params | needed_params) as ydl:
+	with YoutubeDL({**ytdlp_params, **needed_params}) as ydl:
 		info = ydl.extract_info(url, download=False)
 		if isinstance(info, dict):
 			if info['extractor'] in banned_extractors:

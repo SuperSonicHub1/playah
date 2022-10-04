@@ -24,7 +24,7 @@ def build_request(url: str, info: dict):
 	req = client.build_request(
 		'GET',
 		url,
-		headers=headers | {'x-forwarded-ip': request.remote_addr} | info.get('http_headers', {}),
+		headers={**headers, **{'x-forwarded-ip': request.remote_addr}, **info.get('http_headers', {})},
 	)
 
 	return req
@@ -38,7 +38,7 @@ async def httpx_to_quart(content, res: HttpxResponse):
 		if 'content-type' in res_headers:
 			server_res_headers['content-type'] = res_headers['content-type']
 	else:
-		server_res_headers |= res.headers
+		server_res_headers.update(res.headers)
 
 	server_res.headers = server_res_headers
 	server_res.headers['x-url'] = str(res.url)
