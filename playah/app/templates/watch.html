@@ -20,43 +20,43 @@
 <p>modified <time {{ dict(datetime=timestamp.isoformat) | xmlattr }}>{{ timestamp.strftime('%c') }}</time></p>
 {% endif %}
 
-	<video controls autoplay {{ dict(poster=url_for('proxy.thumbnail', v=webpage_url)) | xmlattr }}>
-		<p>HTML video not supported.</p>
-		{% if 'manifest_url' in info %}
-		{% set mimetype = info.manifest_url | guess_type(url=True) %}
-		{% if mimetype == 'application/vnd.apple.mpegurl' %}
-		{% set _ = features.update(dict(hls=True)) %}
-		<source {{ dict(src=url_for('proxy.manifest_hls', v=webpage_url), type=mimetype) | xmlattr }}>
-		{% elif mimetype == 'application/dash+xml' %}
-		{% set _ = features.update(dict(dash=True)) %}
-		<source {{ dict(src=url_for('proxy.manifest_dash', v=webpage_url), type=mimetype) | xmlattr }}>
-		{% else %}
-		<p>Cannot play manifest URL of type
-			<pre>{{ mimetype }}</pre>.
-		</p>
-		{% endif %}
-		{% else %}
-		<source {{ dict(src=url_for('proxy.media', v=webpage_url), type=(info.url | guess_type(url=True)) or (info.ext |
-			guess_type)) | xmlattr }}>
-		{% endif %}
-	
-		{% if info.requested_subtitles %}
-			{% for language, format in info.requested_subtitles.items() %}
-				{% set mimetype = (format.ext | guess_type) or (format.url | guess_type(url=True)) %}
-				{% set _ = features.update(dict(substation=features.substation or (mimetype == 'text/substation'))) %}
-				<track default {{ dict( srclang=language, label=format.name or language, src=url_for('proxy.requested_subtitles',
-					v=webpage_url, language=language), **{'data-type': mimetype}, ) | xmlattr }}>
-			{% endfor %}
-		{% endif %}
-	
-		{% if info.chapters %}
-		<track kind="chapters" {{ dict(label='Chapters' , src=url_for('chapters', v=webpage_url)) | xmlattr }}>
-		{% endif %}
-	</video>
-{% if False and info | has_chat %}
-	<script type="module" {{ dict(src=url_for('static', filename='js/chat-component.js')) | xmlattr }}></script>
-	<live-chat {{ dict(url=webpage_url) | xmlattr }}></live-chat>
+<video controls autoplay {{ dict(poster=url_for('proxy.thumbnail', v=webpage_url)) | xmlattr }}>
+	<p>HTML video not supported.</p>
+	{% if 'manifest_url' in info %}
+	{% set mimetype = info.manifest_url | guess_type(url=True) %}
+	{% if mimetype == 'application/vnd.apple.mpegurl' %}
+	{% set _ = features.update(dict(hls=True)) %}
+	<source {{ dict(src=url_for('proxy.manifest_hls', v=webpage_url), type=mimetype) | xmlattr }}>
+	{% elif mimetype == 'application/dash+xml' %}
+	{% set _ = features.update(dict(dash=True)) %}
+	<source {{ dict(src=url_for('proxy.manifest_dash', v=webpage_url), type=mimetype) | xmlattr }}>
+	{% else %}
+	<p>Cannot play manifest URL of type
+		<pre>{{ mimetype }}</pre>.
+	</p>
 	{% endif %}
+	{% else %}
+	<source {{ dict(src=url_for('proxy.media', v=webpage_url), type=(info.url | guess_type(url=True)) or (info.ext |
+		guess_type)) | xmlattr }}>
+	{% endif %}
+
+	{% if info.requested_subtitles %}
+		{% for language, format in info.requested_subtitles.items() %}
+			{% set mimetype = (format.ext | guess_type) or (format.url | guess_type(url=True)) %}
+			{% set _ = features.update(dict(substation=features.substation or (mimetype == 'text/substation'))) %}
+			<track default {{ dict( srclang=language, label=format.name or language, src=url_for('proxy.requested_subtitles',
+				v=webpage_url, language=language), **{'data-type': mimetype}, ) | xmlattr }}>
+		{% endfor %}
+	{% endif %}
+
+	{% if info.chapters %}
+	<track kind="chapters" {{ dict(label='Chapters' , src=url_for('chapters', v=webpage_url)) | xmlattr }}>
+	{% endif %}
+</video>
+{% if False and info | has_chat %}
+<script type="module" {{ dict(src=url_for('static', filename='js/chat-component.js')) | xmlattr }}></script>
+<live-chat {{ dict(url=webpage_url) | xmlattr }}></live-chat>
+{% endif %}
 
 {% if info.chapters %}
 <div>
@@ -133,19 +133,22 @@
 		{% set entry = entries[index0 - 1] %}
 		{% set entry_index = index - 1 %}
 		<a {{ dict(href=url_for('watch', v=entry.url, list=playlist_info.webpage_url, index=entry_index)) | xmlattr }}>
-			⬅️ Previous: {{ entry.title | repr }}
+			⬅️ Previous{% if entry.title %}: {{ entry.title | repr }}{% endif %}
 		</a>
 		{% endif %}
 	</p>
 
-	<p><a {{ dict(href=url_for('playlist', list=playlist_info.webpage_url)) | xmlattr }}>Playlist: {{
-			playlist_info.title | repr }}</a></p>
+	<p>
+		<a {{ dict(href=url_for('playlist', list=playlist_info.webpage_url)) | xmlattr }}>
+			Playlist{% if playlist_info.title %}: {{ playlist_info.title | repr }}{% endif %}
+		</a>
+	</p>
 
 	<p>
 		{% if index0 + 1 < (entries | length) %} {% set entry=entries[index0 + 1] %} {% set entry_index=index + 1 %} {%
 			set next_entry=True %} <a {{ dict(id='next' , href=url_for('watch', v=entry.url,
 			list=playlist_info.webpage_url, index=entry_index)) | xmlattr }}>
-			Next: {{ entry.title | repr }} ➡️
+			Next{% if entry.title %}: {{ entry.title | repr }}{% endif %} ➡️
 			</a>
 			{% endif %}
 	</p>
