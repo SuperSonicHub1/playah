@@ -12,9 +12,9 @@ Query for {{ query }} on {{ extractor }}
 
 {{ macros.search(query, extractor_search_key) }}
 
-{{ macros.playlist(results, list_type='ul', error_text='No results.') }}
+{{ macros.playlist(results, list_type='ul', error_text='No results.', list_links=False) }}
 
-{{ macros.original_url(info) }}
+{{ macros.original_url(results) }}
 
 {% if is_dev %}
 <details>

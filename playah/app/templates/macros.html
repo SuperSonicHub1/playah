@@ -46,10 +46,11 @@
 {%- endmacro %}
 
 {% macro original_url(info) -%}
-<p><a {{ dict(href=results.webpage_url) | xmlattr }}>Original link</a></p>
+<p><a {{ dict(href=info.webpage_url) | xmlattr }}>Original link</a></p>
 {%- endmacro %}
 
-{% macro playlist(info, list_type="ol", error_text="No entries.") -%}
+{% macro playlist(info, list_type="ol", error_text="No entries.", list_links=True) -%}
+	{{ list_links }}
 	{% if info.entries %}
 	<{{ list_type }} class="playlist-entries">
 		{% for entry in info.entries %}
@@ -61,7 +62,7 @@
 				{% endif %}
 			</div>
 			<div>
-				<a {{ dict(href=url_for('resolve', url=entry.url)) | xmlattr }}>
+				<a {{ dict(href=url_for('resolve', url=entry.url, index=loop.index if list_links else None, list=info.webpage_url if list_links else None)) | xmlattr }}>
 					{{ (entry.title or entry.url) | unescape }}
 				</a>
 				{{ uploader(entry) }}
