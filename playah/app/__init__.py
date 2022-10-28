@@ -88,7 +88,7 @@ def get_title(info: dict) -> str:
 	if info['extractor'] == 'Crunchyroll':
 		return info['episode']
 	
-	return info['title']
+	return info.get('title', info['webpage_url'])
 
 @app.template_filter('get_uploader')
 def get_uploader(info: dict) -> Optional[str]:
