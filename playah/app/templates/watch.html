@@ -20,7 +20,6 @@
 <p>modified <time {{ dict(datetime=timestamp.isoformat) | xmlattr }}>{{ timestamp.strftime('%c') }}</time></p>
 {% endif %}
 
-<div class="flex">
 	<video controls autoplay {{ dict(poster=url_for('proxy.thumbnail', v=webpage_url)) | xmlattr }}>
 		<p>HTML video not supported.</p>
 		{% if 'manifest_url' in info %}
@@ -54,11 +53,10 @@
 		<track kind="chapters" {{ dict(label='Chapters' , src=url_for('chapters', v=webpage_url)) | xmlattr }}>
 		{% endif %}
 	</video>
-	{% if info | has_chat %}
+{% if False and info | has_chat %}
 	<script type="module" {{ dict(src=url_for('static', filename='js/chat-component.js')) | xmlattr }}></script>
 	<live-chat {{ dict(url=webpage_url) | xmlattr }}></live-chat>
 	{% endif %}
-</div>
 
 {% if info.chapters %}
 <div>
